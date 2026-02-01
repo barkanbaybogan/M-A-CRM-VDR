@@ -338,10 +338,14 @@ signed on January 15, 2026. Unauthorized disclosure is strictly prohibited.
                             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                             <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
                                 <option value="lead">Lead</option>
+                                <option value="mandate_sent">Mandate Sent</option>
                                 <option value="qualified">Qualified</option>
                                 <option value="due_diligence">Due Diligence</option>
+                                <option value="buyer_dd">Buyer DD</option>
                                 <option value="negotiation">Negotiation</option>
+                                <option value="dpa_closure">DPA & Closure</option>
                                 <option value="closed_won">Closed Won</option>
+                                <option value="closed_lost">Closed Lost</option>
                             </select>
                         </div>
                     </div>
@@ -593,9 +597,15 @@ signed on January 15, 2026. Unauthorized disclosure is strictly prohibited.
         // Helper Functions
         const getStatusColor = (status) => {
             const colors = {
-                lead: 'bg-gray-100 text-gray-700', qualified: 'bg-blue-100 text-blue-700',
-                due_diligence: 'bg-yellow-100 text-yellow-700', negotiation: 'bg-orange-100 text-orange-700',
-                closed_won: 'bg-green-100 text-green-700', closed_lost: 'bg-red-100 text-red-700',
+                lead: 'bg-gray-100 text-gray-700',
+                mandate_sent: 'bg-indigo-100 text-indigo-700',
+                qualified: 'bg-blue-100 text-blue-700',
+                due_diligence: 'bg-yellow-100 text-yellow-700',
+                buyer_dd: 'bg-purple-100 text-purple-700',
+                negotiation: 'bg-orange-100 text-orange-700',
+                dpa_closure: 'bg-teal-100 text-teal-700',
+                closed_won: 'bg-green-100 text-green-700',
+                closed_lost: 'bg-red-100 text-red-700',
             };
             return colors[status] || 'bg-gray-100 text-gray-700';
         };
@@ -685,10 +695,14 @@ signed on January 15, 2026. Unauthorized disclosure is strictly prohibited.
         const Pipeline = ({ deals, onEditDeal }) => {
             const pipelineStages = [
                 { name: 'Lead', color: 'bg-gray-500', deals: deals.filter(d => d.status === 'lead') },
+                { name: 'Mandate Sent', color: 'bg-indigo-500', deals: deals.filter(d => d.status === 'mandate_sent') },
                 { name: 'Qualified', color: 'bg-blue-500', deals: deals.filter(d => d.status === 'qualified') },
                 { name: 'Due Diligence', color: 'bg-yellow-500', deals: deals.filter(d => d.status === 'due_diligence') },
+                { name: 'Buyer DD', color: 'bg-purple-500', deals: deals.filter(d => d.status === 'buyer_dd') },
                 { name: 'Negotiation', color: 'bg-orange-500', deals: deals.filter(d => d.status === 'negotiation') },
+                { name: 'DPA & Closure', color: 'bg-teal-500', deals: deals.filter(d => d.status === 'dpa_closure') },
                 { name: 'Closed Won', color: 'bg-green-500', deals: deals.filter(d => d.status === 'closed_won') },
+                { name: 'Closed Lost', color: 'bg-red-500', deals: deals.filter(d => d.status === 'closed_lost') },
             ];
 
             return (
