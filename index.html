@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&A CRM - Complete Platform with Edit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .modal-overlay { backdrop-filter: blur(4px); }
+        .document-viewer { background: #f5f5f5; border: 1px solid #ddd; }
+        .no-select { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+        @media print { .no-print { display: none !important; } }
+        .clickable-row { cursor: pointer; transition: all 0.2s; }
+        .clickable-row:hover { background-color: #f9fafb; transform: scale(1.01); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useRef } = React;
+
+        // Complete Icon Library
+        const Icons = {
+            Menu: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
+            X: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+            Dashboard: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
+            Briefcase: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+            Users: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+            Building: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>,
+            ArrowLeft: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>,
+            CheckSquare: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
+            BarChart: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+            Folder: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>,
+            Plus: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+            TrendingUp: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>,
+            File: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+            Clock: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+            Upload: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>,
+            UserPlus: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>,
+            Edit: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
+            Trash: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+            Eye: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
+            Download: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>,
+            Printer: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>,
+            Lock: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
+            Shield: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
+            ZoomIn: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" /></svg>,
+            ZoomOut: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>,
+        };
+
+        // Modal Component
+        const Modal = ({ isOpen, onClose, title, children, size = 'max-w-2xl' }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 transition-opacity modal-overlay" onClick={onClose}>
+                            <div className="absolute inset-0 bg-gray-900 opacity-75"></div>
+                        </div>
+                        <div className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle ${size} sm:w-full`}>
+                            <div className="bg-white px-6 py-4 border-b border-gray-200">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                                    <button onClick={onClose} className="text-gray-400 hover:text-gray-500"><Icons.X /></button>
+                                </div>
+                            </div>
+                            <div className="bg-white px-6 py-6">{children}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Back Button Component
+        const BackButton = ({ onClick }) => (
+            <button 
+                onClick={onClick}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium mb-4"
+            >
+                <Icons.ArrowLeft />
+                <span>Back</span>
+            </button>
+        );
+
+        // Document Viewer Component
+        const DocumentViewer = ({ document, permissions, onClose }) => {
+            const [zoom, setZoom] = useState(100);
+            const [showPermissions, setShowPermissions] = useState(false);
+
+            const canView = permissions.includes('view');
+            const canDownload = permissions.includes('download');
+            const canPrint = permissions.includes('print');
+            const canCopy = !permissions.includes('no_copy');
+            const isSecure = permissions.includes('secure');
+
+            const handlePrint = () => {
+                if (canPrint) window.print();
+                else alert('Print permission not granted for this document');
+            };
+
+            const handleDownload = () => {
+                if (canDownload) alert(`Downloading ${document.name}...`);
+                else if (isSecure && permissions.includes('secure_download')) alert(`Secure download initiated for ${document.name}. This download will be tracked and watermarked.`);
+                else alert('Download permission not granted for this document');
+            };
+
+            const getFileIcon = () => {
+                const ext = document.name.split('.').pop().toLowerCase();
+                if (ext === 'pdf') return '📄';
+                if (['doc', 'docx'].includes(ext)) return '📝';
+                if (['xls', 'xlsx'].includes(ext)) return '📊';
+                if (['ppt', 'pptx'].includes(ext)) return '📽️';
+                return '📁';
+            };
+
+            const documentContent = `
+CONFIDENTIAL FINANCIAL STATEMENT
+Q4 2025 - ${document.name}
+
+Executive Summary
+This document contains confidential financial information for Q4 2025.
+
+Revenue Analysis
+Total Revenue: $45.2M
+Growth Rate: 23% YoY
+
+Operating Expenses
+Total OpEx: $28.7M
+R&D Investment: $12.1M
+Sales & Marketing: $9.8M
+
+Net Income
+Net Profit: $16.5M
+Margin: 36.5%
+
+This document is subject to the terms and conditions outlined in the NDA
+signed on January 15, 2026. Unauthorized disclosure is strictly prohibited.
+            `.trim();
+
+            return (
+                <div className="fixed inset-0 z-50 bg-gray-900">
+                    <div className="bg-gray-800 text-white px-6 py-4 flex items-center justify-between no-print">
+                        <div className="flex items-center gap-4">
+                            <button onClick={onClose} className="hover:bg-gray-700 p-2 rounded"><Icons.X /></button>
+                            <div>
+                                <h2 className="text-lg font-semibold">{document.name}</h2>
+                                <p className="text-sm text-gray-300">{document.size} • Uploaded {document.uploaded}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 bg-gray-700 rounded-lg px-3 py-2">
+                                <button onClick={() => setZoom(Math.max(50, zoom - 10))} className="hover:bg-gray-600 p-1 rounded"><Icons.ZoomOut /></button>
+                                <span className="text-sm w-12 text-center">{zoom}%</span>
+                                <button onClick={() => setZoom(Math.min(200, zoom + 10))} className="hover:bg-gray-600 p-1 rounded"><Icons.ZoomIn /></button>
+                            </div>
+                            <button onClick={handlePrint} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${canPrint ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed'}`} disabled={!canPrint}>
+                                <Icons.Printer /><span>Print</span>
+                            </button>
+                            <button onClick={handleDownload} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${(canDownload || permissions.includes('secure_download')) ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 cursor-not-allowed'}`}>
+                                <Icons.Download /><span>{isSecure ? 'Secure Download' : 'Download'}</span>
+                            </button>
+                            <button onClick={() => setShowPermissions(!showPermissions)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg">
+                                <Icons.Shield /><span>Permissions</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {showPermissions && (
+                        <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-4 no-print">
+                            <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2"><Icons.Lock />Document Access Permissions</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-3 h-3 rounded-full ${canView ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                    <span>View: {canView ? 'Granted' : 'Denied'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-3 h-3 rounded-full ${canCopy ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                    <span>Copy: {canCopy ? 'Allowed' : 'Blocked'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-3 h-3 rounded-full ${canPrint ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                    <span>Print: {canPrint ? 'Allowed' : 'Blocked'}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-3 h-3 rounded-full ${canDownload || permissions.includes('secure_download') ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                    <span>Download: {permissions.includes('secure_download') ? 'Secure Only' : canDownload ? 'Allowed' : 'Blocked'}</span>
+                                </div>
+                            </div>
+                            {isSecure && (
+                                <p className="mt-3 text-xs text-orange-700 flex items-center gap-2">
+                                    <Icons.Shield />This document is marked as highly confidential. All access is logged and monitored.
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="h-full overflow-auto bg-gray-100 p-8">
+                        <div className={`max-w-4xl mx-auto bg-white shadow-2xl p-12 document-viewer ${!canCopy ? 'no-select' : ''}`} style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
+                            <div className="mb-6 text-center">
+                                <div className="text-6xl mb-4">{getFileIcon()}</div>
+                                <h1 className="text-2xl font-bold text-gray-900">{document.name}</h1>
+                            </div>
+                            <div className="prose max-w-none">
+                                <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-relaxed">{documentContent}</pre>
+                            </div>
+                            {isSecure && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                                    <div className="transform -rotate-45 text-6xl font-bold text-red-600">CONFIDENTIAL</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Document Permissions Manager
+        const DocumentPermissionsManager = ({ document, onSave, onClose, teamMembers }) => {
+            const [selectedUser, setSelectedUser] = useState('');
+            const [userPermissions, setUserPermissions] = useState({});
+
+            const permissionOptions = [
+                { id: 'view', label: 'View Only', description: 'Can only view the document' },
+                { id: 'download', label: 'Download', description: 'Can download the document' },
+                { id: 'print', label: 'Print', description: 'Can print the document' },
+                { id: 'secure_download', label: 'Secure Download', description: 'Can download with watermark and tracking' },
+                { id: 'no_copy', label: 'Prevent Copy', description: 'Text selection disabled' },
+                { id: 'secure', label: 'Mark as Confidential', description: 'Adds watermark and logging' },
+            ];
+
+            const handleTogglePermission = (userId, permissionId) => {
+                setUserPermissions(prev => {
+                    const userPerms = prev[userId] || [];
+                    const hasPermission = userPerms.includes(permissionId);
+                    return {
+                        ...prev,
+                        [userId]: hasPermission ? userPerms.filter(p => p !== permissionId) : [...userPerms, permissionId]
+                    };
+                });
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-blue-900 mb-2">About Document Permissions</h4>
+                        <p className="text-sm text-blue-800">Set granular access controls for this document. Control who can view, download, print, or copy content.</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Select Team Member</h4>
+                        <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}>
+                            <option value="">Choose a team member...</option>
+                            {teamMembers.map(member => (
+                                <option key={member.id} value={member.id}>{member.name} - {member.email}</option>
+                            ))}
+                        </select>
+                    </div>
+                    {selectedUser && (
+                        <div>
+                            <h4 className="font-semibold text-gray-900 mb-3">Set Permissions</h4>
+                            <div className="space-y-3">
+                                {permissionOptions.map(option => (
+                                    <label key={option.id} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                                        <input type="checkbox" className="mt-1 w-4 h-4" checked={(userPermissions[selectedUser] || []).includes(option.id)} onChange={() => handleTogglePermission(selectedUser, option.id)} />
+                                        <div className="flex-1">
+                                            <p className="font-medium text-gray-900">{option.label}</p>
+                                            <p className="text-sm text-gray-600">{option.description}</p>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {Object.keys(userPermissions).length > 0 && (
+                        <div>
+                            <h4 className="font-semibold text-gray-900 mb-3">Permission Summary</h4>
+                            <div className="space-y-2">
+                                {Object.entries(userPermissions).map(([userId, perms]) => {
+                                    const member = teamMembers.find(m => m.id === parseInt(userId));
+                                    return (
+                                        <div key={userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <span className="font-medium">{member?.name}</span>
+                                            <span className="text-sm text-gray-600">{perms.length} permissions granted</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex gap-3 pt-4 border-t">
+                        <button onClick={() => { onSave(userPermissions); onClose(); }} className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">Save Permissions</button>
+                        <button onClick={onClose} className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                    </div>
+                </div>
+            );
+        };
+
+        // Deal Form (for both Add and Edit)
+        const DealForm = ({ deal, onSubmit, onCancel, contacts, companies }) => {
+            const isEdit = !!deal;
+            const [formData, setFormData] = useState(deal || {
+                name: '', company: '', dealType: 'acquisition', status: 'lead',
+                value: '', probability: 30, contactId: '', expectedCloseDate: '', description: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSubmit({
+                    ...formData,
+                    id: deal?.id,
+                    value: parseFloat(formData.value) || 0,
+                    contact: contacts.find(c => c.id === parseInt(formData.contactId))?.name || 'TBD'
+                });
+                onCancel();
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {isEdit && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-sm text-blue-800"><strong>Editing Deal #{deal.id}:</strong> {deal.name}</p>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Deal Name *</label>
+                            <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Company *</label>
+                            <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Deal Type</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.dealType} onChange={(e) => setFormData({...formData, dealType: e.target.value})}>
+                                <option value="acquisition">Acquisition</option>
+                                <option value="merger">Merger</option>
+                                <option value="divestiture">Divestiture</option>
+                                <option value="investment">Investment</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
+                                <optgroup label="PRE-MANDATE">
+                                    <option value="lead">Lead</option>
+                                    <option value="qualified">Qualified</option>
+                                    <option value="closed_won">Closed Won (Advisory Accepted)</option>
+                                    <option value="closed_lost">Closed Lost (Advisory Rejected)</option>
+                                </optgroup>
+                                <optgroup label="POST-MANDATE">
+                                    <option value="mandate_sent">Mandate Sent</option>
+                                    <option value="vendor_dd">Vendor DD</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="loi_negotiation">LOI & Negotiation</option>
+                                    <option value="buyer_dd">Buyer DD</option>
+                                    <option value="dpa_closure">DPA & Closure</option>
+                                    <option value="transaction_completed">Transaction Completed</option>
+                                    <option value="transaction_aborted">Transaction Aborted</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Value (USD) *</label>
+                            <input type="number" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.value} onChange={(e) => setFormData({...formData, value: e.target.value})} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Probability (%)</label>
+                            <input type="number" min="0" max="100" className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.probability} onChange={(e) => setFormData({...formData, probability: parseInt(e.target.value)})} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea rows="2" className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                            {isEdit ? 'Update Deal' : 'Create Deal'}
+                        </button>
+                        <button type="button" onClick={onCancel} className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                    </div>
+                </form>
+            );
+        };
+
+        // Contact Form (for both Add and Edit)
+        const ContactForm = ({ contact, onSubmit, onCancel, companies }) => {
+            const isEdit = !!contact;
+            const [formData, setFormData] = useState(contact || {
+                name: '', company: '', email: '', phone: '', type: 'buyer', title: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSubmit({ ...formData, id: contact?.id, deals: contact?.deals || 0 });
+                onCancel();
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {isEdit && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-sm text-blue-800"><strong>Editing Contact:</strong> {contact.name}</p>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                            <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Company *</label>
+                            <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                            <input type="email" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="tel" className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.phone || ''} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                                <option value="buyer">Buyer</option>
+                                <option value="seller">Seller</option>
+                                <option value="advisor">Advisor</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.title || ''} onChange={(e) => setFormData({...formData, title: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                            {isEdit ? 'Update Contact' : 'Add Contact'}
+                        </button>
+                        <button type="button" onClick={onCancel} className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                    </div>
+                </form>
+            );
+        };
+
+        // Team Member Form (for both Add and Edit)
+        const TeamMemberForm = ({ member, onSubmit, onCancel }) => {
+            const isEdit = !!member;
+            const [formData, setFormData] = useState(member || {
+                name: '', email: '', role: 'member'
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSubmit({ ...formData, id: member?.id });
+                onCancel();
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {isEdit && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-sm text-blue-800"><strong>Editing Team Member:</strong> {member.name}</p>
+                        </div>
+                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                        <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input type="email" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                        <select className="w-full px-3 py-2 border border-gray-300 rounded-lg" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}>
+                            <option value="admin">Admin</option>
+                            <option value="member">Member</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                            {isEdit ? 'Update Member' : 'Add Member'}
+                        </button>
+                        <button type="button" onClick={onCancel} className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                    </div>
+                </form>
+            );
+        };
+
+        // Task Form (for both Add and Edit)
+        const TaskForm = ({ task, onSubmit, onCancel, deals, contacts, preselectedContact, preselectedDeal, teamMembers }) => {
+            const isEdit = !!task;
+            const fileInputRef = useRef(null);
+            const [formData, setFormData] = useState(task || {
+                title: '', 
+                description: '',
+                notes: '',
+                attachments: [],
+                dealId: preselectedDeal?.id || '', 
+                contactId: preselectedContact?.id || '',
+                assignedTo: '',
+                priority: 'medium', 
+                status: 'todo', 
+                dueDate: ''
+            });
+
+            const viewAttachment = (attachment) => {
+                // Create a temporary link to download the file
+                const link = document.createElement('a');
+                link.href = attachment.data;
+                link.download = attachment.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            const handleFileUpload = (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const newAttachment = {
+                            id: Date.now() + Math.random(),
+                            name: file.name,
+                            size: (file.size / 1024).toFixed(2) + ' KB',
+                            data: event.target.result,
+                            uploadedAt: new Date().toLocaleDateString()
+                        };
+                        setFormData(prev => ({
+                            ...prev,
+                            attachments: [...(prev.attachments || []), newAttachment]
+                        }));
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const removeAttachment = (attachmentId) => {
+                setFormData(prev => ({
+                    ...prev,
+                    attachments: prev.attachments.filter(a => a.id !== attachmentId)
+                }));
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const deal = deals.find(d => d.id === parseInt(formData.dealId));
+                const contact = contacts.find(c => c.id === parseInt(formData.contactId));
+                
+                onSubmit({
+                    ...formData,
+                    id: task?.id,
+                    deal: deal?.name || 'No deal',
+                    contact: contact?.name || 'No contact',
+                    company: contact?.company || deal?.company || 'No company'
+                });
+                onCancel();
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {isEdit && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-sm text-blue-800"><strong>Editing Task:</strong> {task.title}</p>
+                        </div>
+                    )}
+                    {(preselectedContact || preselectedDeal) && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-sm text-green-800">
+                                <strong>Creating task for:</strong> {preselectedContact?.name || preselectedDeal?.name} 
+                                {preselectedContact && ` at ${preselectedContact.company}`}
+                            </p>
+                        </div>
+                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
+                        <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} placeholder="e.g., Follow up on proposal" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea rows="2" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.description || ''} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Task details..." />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Notes (for later review)</label>
+                        <textarea rows="3" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-yellow-50" value={formData.notes || ''} onChange={(e) => setFormData({...formData, notes: e.target.value})} placeholder="Add notes to review or address later..." />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">File Attachments</label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                onChange={handleFileUpload}
+                                className="hidden"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="bg-white px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-2 mx-auto"
+                            >
+                                <Icons.Upload /> Attach Files
+                            </button>
+                            <p className="text-xs text-gray-500 mt-2">Upload documents, images, or any files</p>
+                        </div>
+                        {formData.attachments && formData.attachments.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                                {formData.attachments.map(attachment => (
+                                    <div key={attachment.id} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 flex-1 cursor-pointer hover:bg-gray-100 rounded p-2 -m-2" onClick={() => viewAttachment(attachment)}>
+                                            <Icons.File />
+                                            <div>
+                                                <p className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">{attachment.name}</p>
+                                                <p className="text-xs text-gray-500">{attachment.size} • {attachment.uploadedAt}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeAttachment(attachment.id)}
+                                            className="text-red-600 hover:text-red-700 p-1"
+                                        >
+                                            <Icons.Trash />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Related Contact</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.contactId} onChange={(e) => setFormData({...formData, contactId: e.target.value})} disabled={!!preselectedContact}>
+                                <option value="">No contact</option>
+                                {contacts.map(contact => (
+                                    <option key={contact.id} value={contact.id}>{contact.name} - {contact.company}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Related Deal</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.dealId} onChange={(e) => setFormData({...formData, dealId: e.target.value})} disabled={!!preselectedDeal}>
+                                <option value="">No deal</option>
+                                {deals.map(deal => (
+                                    <option key={deal.id} value={deal.id}>{deal.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.assignedTo || ''} onChange={(e) => setFormData({...formData, assignedTo: e.target.value})}>
+                                <option value="">Select team member</option>
+                                {teamMembers && teamMembers.map(member => (
+                                    <option key={member.id} value={member.name}>{member.name} - {member.role}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.priority} onChange={(e) => setFormData({...formData, priority: e.target.value})}>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                            <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.dueDate || ''} onChange={(e) => setFormData({...formData, dueDate: e.target.value})} />
+                        </div>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                            {isEdit ? 'Update Task' : 'Create Task'}
+                        </button>
+                        <button type="button" onClick={onCancel} className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                    </div>
+                </form>
+            );
+        };
+
+        // Helper Functions
+        const getStatusColor = (status) => {
+            const colors = {
+                lead: 'bg-gray-100 text-gray-700',
+                qualified: 'bg-blue-100 text-blue-700',
+                closed_won: 'bg-green-100 text-green-700',
+                closed_lost: 'bg-red-100 text-red-700',
+                mandate_sent: 'bg-indigo-100 text-indigo-700',
+                vendor_dd: 'bg-purple-100 text-purple-700',
+                marketing: 'bg-pink-100 text-pink-700',
+                loi_negotiation: 'bg-yellow-100 text-yellow-700',
+                buyer_dd: 'bg-cyan-100 text-cyan-700',
+                dpa_closure: 'bg-teal-100 text-teal-700',
+                transaction_completed: 'bg-emerald-100 text-emerald-700',
+                transaction_aborted: 'bg-rose-100 text-rose-700',
+            };
+            return colors[status] || 'bg-gray-100 text-gray-700';
+        };
+
+        const getPriorityColor = (priority) => {
+            const colors = {
+                low: 'bg-blue-100 text-blue-700', medium: 'bg-yellow-100 text-yellow-700',
+                high: 'bg-orange-100 text-orange-700', urgent: 'bg-red-100 text-red-700',
+            };
+            return colors[priority] || 'bg-gray-100 text-gray-700';
+        };
+
+        const StatCard = ({ title, value, icon, color, change }) => (
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-600">{title}</p>
+                        <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
+                        <p className="text-sm text-green-600 mt-2">{change} from last month</p>
+                    </div>
+                    <div className={`${color} p-3 rounded-lg`}><div className="text-white">{icon}</div></div>
+                </div>
+            </div>
+        );
+
+
+        // Company Form Component
+        const CompanyForm = ({ company, onSubmit, onCancel }) => {
+            const [formData, setFormData] = useState(company || {
+                name: '',
+                industry: 'Technology',
+                size: '51-200 employees',
+                location: '',
+                website: '',
+                description: '',
+                revenueRange: '$10M - $50M',
+                foundedYear: new Date().getFullYear()
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSubmit({
+                    ...formData,
+                    id: company?.id
+                });
+                onCancel();
+            };
+
+            return (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
+                        <input type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g., TechCorp Inc." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.industry} onChange={(e) => setFormData({...formData, industry: e.target.value})}>
+                                <option value="Technology">Technology</option>
+                                <option value="Financial Services">Financial Services</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Retail">Retail</option>
+                                <option value="Manufacturing">Manufacturing</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.size} onChange={(e) => setFormData({...formData, size: e.target.value})}>
+                                <option value="1-10 employees">1-10 employees</option>
+                                <option value="11-50 employees">11-50 employees</option>
+                                <option value="51-200 employees">51-200 employees</option>
+                                <option value="201-500 employees">201-500 employees</option>
+                                <option value="500+ employees">500+ employees</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} placeholder="e.g., San Francisco, CA" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                        <input type="url" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.website} onChange={(e) => setFormData({...formData, website: e.target.value})} placeholder="https://example.com" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea rows="3" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} placeholder="Brief company description..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Revenue Range</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.revenueRange} onChange={(e) => setFormData({...formData, revenueRange: e.target.value})}>
+                                <option value="< $1M">< $1M</option>
+                                <option value="$1M - $10M">$1M - $10M</option>
+                                <option value="$10M - $50M">$10M - $50M</option>
+                                <option value="$50M - $100M">$50M - $100M</option>
+                                <option value="$100M+">$100M+</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Founded Year</label>
+                            <input type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" value={formData.foundedYear} onChange={(e) => setFormData({...formData, foundedYear: e.target.value})} placeholder="2020" />
+                        </div>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="submit" className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                            {company ? 'Update Company' : 'Create Company'}
+                        </button>
+                        <button type="button" onClick={onCancel} className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                    </div>
+                </form>
+            );
+        };
+
+        // Dashboard Component
+        const Dashboard = ({ deals, tasks, contacts, onEditDeal, onNavigate, onEditTask }) => {
+            const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
+            const activeDeals = deals.filter(d => !['closed_won', 'closed_lost', 'transaction_completed', 'transaction_aborted'].includes(d.status)).length;
+            const pendingTasks = tasks.filter(t => t.status !== 'done').length;
+
+            return (
+                <div className="space-y-6">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+                        <p className="text-gray-500 mt-1">Welcome back! Click on any card or item to view details.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div onClick={() => onNavigate('deals')} className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg">
+                            <StatCard title="Active Deals" value={activeDeals} icon={<Icons.Briefcase />} color="bg-blue-500" change="+12%" />
+                        </div>
+                        <div onClick={() => onNavigate('deals')} className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg">
+                            <StatCard title="Total Value" value={`$${(totalValue / 1000000).toFixed(1)}M`} icon={<Icons.TrendingUp />} color="bg-green-500" change="+8%" />
+                        </div>
+                        <div onClick={() => onNavigate('tasks')} className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg">
+                            <StatCard title="Pending Tasks" value={pendingTasks} icon={<Icons.CheckSquare />} color="bg-orange-500" change="-3%" />
+                        </div>
+                        <div onClick={() => onNavigate('contacts')} className="cursor-pointer transition-all hover:scale-105 hover:shadow-lg">
+                            <StatCard title="Contacts" value={contacts.length} icon={<Icons.Users />} color="bg-purple-500" change="+5%" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">Recent Deals</h2>
+                                <button onClick={() => onNavigate('deals')} className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All →</button>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {deals.slice(0, 4).map(deal => (
+                                    <div key={deal.id} className="p-4 hover:bg-gray-50 cursor-pointer clickable-row" onClick={() => onEditDeal(deal)}>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="font-medium text-gray-900">{deal.name}</p>
+                                                <p className="text-sm text-gray-500 mt-1">{deal.company}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-semibold text-gray-900">${(deal.value / 1000000).toFixed(1)}M</p>
+                                                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${getStatusColor(deal.status)}`}>{deal.status.replace(/_/g, ' ')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">Upcoming Tasks</h2>
+                                <button onClick={() => onNavigate('tasks')} className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All →</button>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {tasks.slice(0, 4).map(task => (
+                                    <div key={task.id} className="p-4 hover:bg-gray-50 cursor-pointer clickable-row" onClick={() => onEditTask(task)}>
+                                        <div className="flex items-start gap-3">
+                                            <input type="checkbox" checked={task.status === 'done'} className="w-5 h-5 mt-1 rounded border-gray-300" readOnly />
+                                            <div className="flex-1">
+                                                <p className={`text-sm font-medium ${task.status === 'done' ? 'line-through text-gray-500' : 'text-gray-900'}`}>{task.title}</p>
+                                                <p className="text-xs text-gray-500 mt-1">{task.deal} • {task.dueDate}</p>
+                                            </div>
+                                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(task.priority)}`}>{task.priority}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Pipeline Component
+        const Pipeline = ({ deals, handleBack, onEditDeal }) => {
+            const pipelineStages = [
+                // PRE-MANDATE STAGE
+                { name: 'PRE-MANDATE', color: 'bg-slate-700', isHeader: true },
+                { name: 'Lead', color: 'bg-gray-500', deals: deals.filter(d => d.status === 'lead') },
+                { name: 'Qualified', color: 'bg-blue-500', deals: deals.filter(d => d.status === 'qualified') },
+                { name: 'Closed Won', color: 'bg-green-500', deals: deals.filter(d => d.status === 'closed_won') },
+                { name: 'Closed Lost', color: 'bg-red-500', deals: deals.filter(d => d.status === 'closed_lost') },
+                
+                // POST-MANDATE STAGE
+                { name: 'POST-MANDATE', color: 'bg-slate-700', isHeader: true },
+                { name: 'Mandate Sent', color: 'bg-indigo-500', deals: deals.filter(d => d.status === 'mandate_sent') },
+                { name: 'Vendor DD', color: 'bg-purple-500', deals: deals.filter(d => d.status === 'vendor_dd') },
+                { name: 'Marketing', color: 'bg-pink-500', deals: deals.filter(d => d.status === 'marketing') },
+                { name: 'LOI & Negotiation', color: 'bg-yellow-500', deals: deals.filter(d => d.status === 'loi_negotiation') },
+                { name: 'Buyer DD', color: 'bg-cyan-500', deals: deals.filter(d => d.status === 'buyer_dd') },
+                { name: 'DPA & Closure', color: 'bg-teal-500', deals: deals.filter(d => d.status === 'dpa_closure') },
+                { name: 'Transaction Completed', color: 'bg-emerald-600', deals: deals.filter(d => d.status === 'transaction_completed') },
+                { name: 'Transaction Aborted', color: 'bg-rose-600', deals: deals.filter(d => d.status === 'transaction_aborted') },
+            ];
+
+            return (
+                <div className="space-y-6">
+                    <BackButton onClick={handleBack} />
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Pipeline</h1>
+                            <p className="text-gray-500 mt-1">Visual deal pipeline • Organized by Pre-Mandate and Post-Mandate stages</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-4">
+                        {pipelineStages.map((stage, index) => (
+                            stage.isHeader ? (
+                                <div key={stage.name} className="flex-shrink-0 w-64">
+                                    <div className={`${stage.color} text-white px-4 py-3 rounded-lg font-bold text-center text-sm tracking-wider`}>
+                                        {stage.name}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div key={stage.name} className="flex-shrink-0 w-80">
+                                    <div className={`${stage.color} text-white px-4 py-2 rounded-t-lg flex items-center justify-between`}>
+                                        <span className="font-semibold">{stage.name}</span>
+                                        <span className="bg-white bg-opacity-30 px-2 py-1 rounded text-sm">{stage.deals.length}</span>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-b-lg p-3 space-y-3 min-h-[400px]">
+                                        {stage.deals.map(deal => (
+                                            <div key={deal.id} onClick={() => onEditDeal(deal)} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md cursor-pointer clickable-row">
+                                                <h3 className="font-semibold text-gray-900">{deal.name}</h3>
+                                                <p className="text-sm text-gray-600 mt-1">{deal.company}</p>
+                                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                                    <p className="text-lg font-bold text-gray-900">${(deal.value / 1000000).toFixed(1)}M</p>
+                                                    <div className="mt-2 flex items-center justify-between">
+                                                        <span className="text-xs text-gray-500">{deal.contact}</span>
+                                                        <span className="text-xs font-medium text-blue-600">{deal.probability}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )
+                        ))}
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="space-y-6">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900">Deal Pipeline</h1>
+                        <p className="text-gray-500 mt-1">Click on any card to edit the deal</p>
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-4">
+                        {pipelineStages.map(stage => (
+                            <div key={stage.name} className="flex-shrink-0 w-80">
+                                <div className={`${stage.color} text-white px-4 py-2 rounded-t-lg flex items-center justify-between`}>
+                                    <span className="font-semibold">{stage.name}</span>
+                                    <span className="bg-white bg-opacity-30 px-2 py-1 rounded text-sm">{stage.deals.length}</span>
+                                </div>
+                                <div className="bg-gray-50 rounded-b-lg p-3 space-y-3 min-h-[400px]">
+                                    {stage.deals.map(deal => (
+                                        <div key={deal.id} onClick={() => onEditDeal(deal)} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md cursor-pointer clickable-row">
+                                            <h3 className="font-semibold text-gray-900">{deal.name}</h3>
+                                            <p className="text-sm text-gray-600 mt-1">{deal.company}</p>
+                                            <div className="mt-3 pt-3 border-t border-gray-100">
+                                                <p className="text-lg font-bold text-gray-900">${(deal.value / 1000000).toFixed(1)}M</p>
+                                                <div className="mt-2 flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">{deal.contact}</span>
+                                                    <span className="text-xs font-medium text-blue-600">{deal.probability}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Deals List Component
+        const DealsList = ({ deals, contacts, onSaveDeal, onDelete, onCreateTask, teamMembers, handleBack, companies }) => {
+            const [editingDeal, setEditingDeal] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+            const [creatingTaskFor, setCreatingTaskFor] = useState(null);
+
+            const handleEdit = (deal) => {
+                setEditingDeal(deal);
+                setShowModal(true);
+            };
+
+            const handleAdd = () => {
+                setEditingDeal(null);
+                setShowModal(true);
+            };
+
+            const handleCreateTask = (deal) => {
+                setCreatingTaskFor(deal);
+            };
+
+            return (
+                <>
+                    <div className="space-y-6">
+                        <BackButton onClick={handleBack} />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
+                                <p className="text-gray-500 mt-1">{deals.length} total deals • Click any row to edit</p>
+                            </div>
+                            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <Icons.Plus /> New Deal
+                            </button>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Deal Name</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {deals.map(deal => (
+                                            <tr key={deal.id} className="hover:bg-gray-50 clickable-row">
+                                                <td onClick={() => handleEdit(deal)} className="px-6 py-4 font-medium text-gray-900 cursor-pointer">{deal.name}</td>
+                                                <td onClick={() => handleEdit(deal)} className="px-6 py-4 text-gray-600 cursor-pointer">{deal.company}</td>
+                                                <td onClick={() => handleEdit(deal)} className="px-6 py-4 font-semibold text-gray-900 cursor-pointer">${(deal.value / 1000000).toFixed(1)}M</td>
+                                                <td onClick={() => handleEdit(deal)} className="px-6 py-4 cursor-pointer">
+                                                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(deal.status)}`}>
+                                                        {deal.status.replace(/_/g, ' ')}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={(e) => { e.stopPropagation(); handleCreateTask(deal); }} className="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded" title="Create task">
+                                                            <Icons.Plus />
+                                                        </button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(deal); }} className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded" title="Edit"><Icons.Edit /></button>
+                                                        <button onClick={(e) => { e.stopPropagation(); onDelete(deal.id); }} className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 rounded" title="Delete"><Icons.Trash /></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingDeal ? 'Edit Deal' : 'Create New Deal'}>
+                        <DealForm deal={editingDeal} onSubmit={onSaveDeal} onCancel={() => setShowModal(false)} contacts={contacts} companies={companies} />
+                    </Modal>
+                    {creatingTaskFor && (
+                        <Modal isOpen={true} onClose={() => setCreatingTaskFor(null)} title={`Create Task for ${creatingTaskFor.name}`}>
+                            <TaskForm preselectedDeal={creatingTaskFor} onSubmit={(taskData) => { onCreateTask(taskData); setCreatingTaskFor(null); }} onCancel={() => setCreatingTaskFor(null)} deals={[creatingTaskFor]} contacts={contacts} teamMembers={teamMembers} />
+                        </Modal>
+                    )}
+                </>
+            );
+        };
+
+        // Contacts Component
+        const Contacts = ({ contacts, onSaveContact, onDelete, onCreateTask, teamMembers, handleBack, companies }) => {
+            const [editingContact, setEditingContact] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+            const [creatingTaskFor, setCreatingTaskFor] = useState(null);
+
+            const handleEdit = (contact) => {
+                setEditingContact(contact);
+                setShowModal(true);
+            };
+
+            const handleAdd = () => {
+                setEditingContact(null);
+                setShowModal(true);
+            };
+
+            const handleCreateTask = (contact) => {
+                setCreatingTaskFor(contact);
+            };
+
+            return (
+                <>
+                    <div className="space-y-6">
+                        <BackButton onClick={handleBack} />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
+                                <p className="text-gray-500 mt-1">{contacts.length} total contacts • Click any card to edit or create task</p>
+                            </div>
+                            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <Icons.Plus /> New Contact
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {contacts.map(contact => (
+                                <div key={contact.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md relative">
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <button onClick={(e) => { e.stopPropagation(); handleEdit(contact); }} className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded" title="Edit contact"><Icons.Edit /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); onDelete(contact.id); }} className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 rounded" title="Delete contact"><Icons.Trash /></button>
+                                    </div>
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-lg">
+                                            {contact.name.split(' ').map(n => n[0]).join('')}
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-gray-900">{contact.name}</h3>
+                                            <p className="text-sm text-gray-500">{contact.company}</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-gray-600">{contact.email}</p>
+                                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                                            <span className="text-xs font-medium text-blue-600">{contact.type}</span>
+                                            <span className="text-xs text-gray-500">{contact.deals} deals</span>
+                                        </div>
+                                        <button onClick={() => handleCreateTask(contact)} className="w-full mt-3 bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 flex items-center justify-center gap-2 text-sm font-medium transition-colors">
+                                            <Icons.Plus className="w-4 h-4" />
+                                            Create Task
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingContact ? 'Edit Contact' : 'Add New Contact'}>
+                        <ContactForm contact={editingContact} onSubmit={onSaveContact} onCancel={() => setShowModal(false)} companies={companies} />
+                    </Modal>
+                    {creatingTaskFor && (
+                        <Modal isOpen={true} onClose={() => setCreatingTaskFor(null)} title={`Create Task for ${creatingTaskFor.name}`}>
+                            <TaskForm preselectedContact={creatingTaskFor} onSubmit={(taskData) => { onCreateTask(taskData); setCreatingTaskFor(null); }} onCancel={() => setCreatingTaskFor(null)} deals={[]} contacts={[creatingTaskFor]} teamMembers={teamMembers} />
+                        </Modal>
+                    )}
+                </>
+            );
+        };
+
+        // Tasks Component
+
+        // Companies Component  
+        const Companies = ({ companies, onSaveCompany, onDelete, handleBack }) => {
+            const [editingCompany, setEditingCompany] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+
+            const handleEdit = (company) => {
+                setEditingCompany(company);
+                setShowModal(true);
+            };
+
+            const handleAdd = () => {
+                setEditingCompany(null);
+                setShowModal(true);
+            };
+
+            return (
+                <>
+                    <div className="space-y-6">
+                        <BackButton onClick={handleBack} />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900">Companies</h1>
+                                <p className="text-gray-500 mt-1">{companies.length} companies • Manage your company database</p>
+                            </div>
+                            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <Icons.Plus /> New Company
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {companies.map(company => (
+                                <div key={company.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-blue-100 p-3 rounded-lg">
+                                                <Icons.Building />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900">{company.name}</h3>
+                                                <p className="text-sm text-gray-500">{company.industry}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 text-sm text-gray-600">
+                                        <p>👥 {company.size}</p>
+                                        <p>📍 {company.location}</p>
+                                        {company.website && <p className="text-blue-600 truncate">🌐 {company.website}</p>}
+                                        {company.description && <p className="text-gray-500 text-xs mt-2 line-clamp-2">{company.description}</p>}
+                                        {company.revenueRange && <p className="text-gray-600 mt-2">💰 {company.revenueRange}</p>}
+                                        {company.foundedYear && <p className="text-gray-500 text-xs">Founded: {company.foundedYear}</p>}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                                        <button onClick={() => handleEdit(company)} className="flex-1 text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1">
+                                            <Icons.Edit /> Edit
+                                        </button>
+                                        <button onClick={() => onDelete(company.id)} className="text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1">
+                                            <Icons.Trash /> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingCompany ? 'Edit Company' : 'Create New Company'}>
+                        <CompanyForm company={editingCompany} onSubmit={onSaveCompany} onCancel={() => setShowModal(false)} />
+                    </Modal>
+                </>
+            );
+        };
+
+                const Tasks = ({ tasks, deals, contacts, onSaveTask, onDelete, onToggle, teamMembers, handleBack }) => {
+            const [editingTask, setEditingTask] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+
+            const handleEdit = (task) => {
+                setEditingTask(task);
+                setShowModal(true);
+            };
+
+            const handleAdd = () => {
+                setEditingTask(null);
+                setShowModal(true);
+            };
+
+            return (
+                <>
+                    <div className="space-y-6">
+                        <BackButton onClick={handleBack} />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
+                                <p className="text-gray-500 mt-1">{tasks.filter(t => t.status !== 'done').length} pending • Click any task to edit</p>
+                            </div>
+                            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <Icons.Plus /> New Task
+                            </button>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            <div className="divide-y divide-gray-100">
+                                {tasks.map(task => (
+                                    <div key={task.id} className="p-6 hover:bg-gray-50 clickable-row" onClick={() => handleEdit(task)}>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1 flex items-start gap-3">
+                                                <input type="checkbox" checked={task.status === 'done'} onChange={(e) => { e.stopPropagation(); onToggle(task.id); }} className="w-5 h-5 mt-1 rounded border-gray-300 cursor-pointer" onClick={(e) => e.stopPropagation()} />
+                                                <div className="flex-1">
+                                                    <h3 className={`font-medium ${task.status === 'done' ? 'line-through text-gray-500' : 'text-gray-900'}`}>{task.title}</h3>
+                                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                                                        {task.contact && <span>👤 {task.contact}</span>}
+                                                        {task.company && <span>• 🏢 {task.company}</span>}
+                                                        {task.deal && task.deal !== 'No deal' && <span>• 💼 {task.deal}</span>}
+                                                        {task.assignedTo && <span>• 👨‍💼 Assigned to: {task.assignedTo}</span>}
+                                                    </div>
+                                                    {task.description && <p className="text-sm text-gray-500 mt-1">{task.description}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 ml-4">
+                                                <span className={`px-3 py-1 text-xs font-medium rounded-full ${getPriorityColor(task.priority)}`}>{task.priority}</span>
+                                                <span className="text-sm text-gray-500 whitespace-nowrap">{task.dueDate}</span>
+                                                <button onClick={(e) => { e.stopPropagation(); handleEdit(task); }} className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded" title="Edit"><Icons.Edit /></button>
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 rounded" title="Delete"><Icons.Trash /></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingTask ? 'Edit Task' : 'Create New Task'}>
+                        <TaskForm task={editingTask} onSubmit={onSaveTask} onCancel={() => setShowModal(false)} deals={deals} contacts={contacts} teamMembers={teamMembers} />
+                    </Modal>
+                </>
+            );
+        };
+
+        // File Upload Modal Component
+        const FileUploadModal = ({ isOpen, onClose, onUpload }) => {
+            const [selectedFile, setSelectedFile] = useState(null);
+            const [fileName, setFileName] = useState('');
+            const [folder, setFolder] = useState('Legal');
+            const [isDragging, setIsDragging] = useState(false);
+            const fileInputRef = useRef(null);
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setIsDragging(true);
+            };
+
+            const handleDragLeave = () => {
+                setIsDragging(false);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            };
+
+            const handleFileSelect = (file) => {
+                setSelectedFile(file);
+                setFileName(file.name);
+            };
+
+            const handleFileInputChange = (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            };
+
+            const handleUpload = () => {
+                if (selectedFile && fileName) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        onUpload({
+                            name: fileName,
+                            folder: folder,
+                            size: (selectedFile.size / 1024).toFixed(0) + ' KB',
+                            uploaded: new Date().toLocaleDateString(),
+                            fileData: e.target.result
+                        });
+                        onClose();
+                        setSelectedFile(null);
+                        setFileName('');
+                    };
+                    reader.readAsDataURL(selectedFile);
+                }
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Upload Document">
+                    <div className="space-y-4">
+                        <div
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                                isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50'
+                            }`}
+                        >
+                            <div className="flex justify-center mb-3">
+                                <Icons.Upload />
+                            </div>
+                            <p className="text-sm text-gray-600">
+                                <span className="font-semibold">Drag & drop files here</span>
+                                <br />
+                                or
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="mt-2 bg-white px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+                            >
+                                Browse Files
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                onChange={handleFileInputChange}
+                                className="hidden"
+                            />
+                        </div>
+
+                        {selectedFile && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-sm text-blue-900">
+                                    <strong>Selected:</strong> {selectedFile.name} ({(selectedFile.size / 1024).toFixed(0)} KB)
+                                </p>
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Document Name *
+                            </label>
+                            <input
+                                type="text"
+                                value={fileName}
+                                onChange={(e) => setFileName(e.target.value)}
+                                placeholder="Enter document name"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Folder *
+                            </label>
+                            <select
+                                value={folder}
+                                onChange={(e) => setFolder(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="Legal">Legal</option>
+                                <option value="Financial">Financial</option>
+                                <option value="Official">Official</option>
+                                <option value="IT">IT</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="HR">HR</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <p className="text-xs text-yellow-800">
+                                ⚠️ Files are stored in browser localStorage. Max size ~5-10 MB per file.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUpload}
+                                disabled={!selectedFile || !fileName}
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Upload Document
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        };
+
+        // Dataroom Component
+        const Dataroom = ({ documents, deals, onDelete, onSetPermissions, teamMembers, onUpload }) => {
+            const [viewingDocument, setViewingDocument] = useState(null);
+            const [managingPermissions, setManagingPermissions] = useState(null);
+            const [showUploadModal, setShowUploadModal] = useState(false);
+
+            return (
+                <>
+                    <div className="space-y-6">
+                        <BackButton onClick={handleBack} />
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900">Dataroom</h1>
+                                <p className="text-gray-500 mt-1">{documents.length} documents • Click 👁️ to view or 🛡️ to manage permissions</p>
+                            </div>
+                            <button onClick={() => setShowUploadModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <Icons.Upload /> Upload Document
+                            </button>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Folder</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uploaded</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {documents.map(doc => (
+                                            <tr key={doc.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <Icons.File />
+                                                        <span className="font-medium text-gray-900">{doc.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-600">{doc.folder}</td>
+                                                <td className="px-6 py-4 text-gray-600">{doc.size}</td>
+                                                <td className="px-6 py-4 text-gray-600">{doc.uploaded}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => setViewingDocument(doc)} className="text-blue-600 hover:text-blue-700 p-1 hover:bg-blue-50 rounded transition-colors" title="View document">
+                                                            <Icons.Eye />
+                                                        </button>
+                                                        <button onClick={() => setManagingPermissions(doc)} className="text-purple-600 hover:text-purple-700 p-1 hover:bg-purple-50 rounded transition-colors" title="Manage permissions">
+                                                            <Icons.Shield />
+                                                        </button>
+                                                        <button onClick={() => onDelete(doc.id)} className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors" title="Delete document">
+                                                            <Icons.Trash />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {viewingDocument && (
+                        <DocumentViewer document={viewingDocument} permissions={viewingDocument.permissions || ['view', 'download', 'print']} onClose={() => setViewingDocument(null)} />
+                    )}
+                    <Modal isOpen={managingPermissions !== null} onClose={() => setManagingPermissions(null)} title={`Manage Permissions - ${managingPermissions?.name}`} size="max-w-3xl">
+                        <DocumentPermissionsManager document={managingPermissions} onSave={(perms) => onSetPermissions(managingPermissions.id, perms)} onClose={() => setManagingPermissions(null)} teamMembers={teamMembers} />
+                    </Modal>
+                    {showUploadModal && (
+                        <FileUploadModal
+                            isOpen={showUploadModal}
+                            onClose={() => setShowUploadModal(false)}
+                            onUpload={(fileData) => {
+                                onUpload(fileData);
+                                setShowUploadModal(false);
+                            }}
+                        />
+                    )}
+                </>
+            );
+        };
+
+        // Team Members Component
+        const TeamMembers = ({ members, onSaveMember, onDelete }) => {
+            const [editingMember, setEditingMember] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+
+            const handleEdit = (member) => {
+                setEditingMember(member);
+                setShowModal(true);
+            };
+
+            const handleAdd = () => {
+                setEditingMember(null);
+                setShowModal(true);
+            };
+
+            return (
+                <>
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900">Team Members</h1>
+                                <p className="text-gray-500 mt-1">{members.length} team members • Click any row to edit</p>
+                            </div>
+                            <button onClick={handleAdd} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <Icons.UserPlus /> Invite Member
+                            </button>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+                            <div className="divide-y divide-gray-200">
+                                {members.map(member => (
+                                    <div key={member.id} onClick={() => handleEdit(member)} className="p-6 flex items-center justify-between hover:bg-gray-50 cursor-pointer clickable-row">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold">
+                                                {member.name.split(' ').map(n => n[0]).join('')}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900">{member.name}</h3>
+                                                <p className="text-sm text-gray-500">{member.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                                member.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                                                member.role === 'member' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-gray-100 text-gray-700'
+                                            }`}>{member.role}</span>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEdit(member); }} className="text-blue-600 hover:text-blue-700 p-1" title="Edit"><Icons.Edit /></button>
+                                            {member.role !== 'admin' && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(member.id); }} className="text-red-600 hover:text-red-700 p-1" title="Delete"><Icons.Trash /></button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingMember ? 'Edit Team Member' : 'Invite Team Member'}>
+                        <TeamMemberForm member={editingMember} onSubmit={onSaveMember} onCancel={() => setShowModal(false)} />
+                    </Modal>
+                </>
+            );
+        };
+
+        // Initial Data
+        const initialDeals = [
+            { id: 1, name: 'TechCorp Acquisition', company: 'TechCorp Inc.', dealType: 'acquisition', status: 'due_diligence', value: 12500000, probability: 75, contactId: 1, contact: 'John Smith', expectedCloseDate: '2026-03-15', description: 'Strategic acquisition' },
+            { id: 2, name: 'RetailChain Merger', company: 'RetailChain LLC', dealType: 'merger', status: 'negotiation', value: 8200000, probability: 60, contactId: 2, contact: 'Sarah Johnson', expectedCloseDate: '2026-04-20', description: 'Market expansion' },
+            { id: 3, name: 'FinTech Investment', company: 'PayFlow Systems', dealType: 'investment', status: 'qualified', value: 5000000, probability: 45, contactId: 3, contact: 'Mike Chen', expectedCloseDate: '2026-05-10', description: 'Growth capital' },
+        ];
+
+        const initialContacts = [
+            { id: 1, name: 'John Smith', company: 'TechCorp Inc.', email: 'john.smith@techcorp.com', phone: '+1 555-0101', type: 'Buyer', title: 'CEO', deals: 2 },
+            { id: 2, name: 'Sarah Johnson', company: 'RetailChain LLC', email: 'sarah.j@retailchain.com', phone: '+1 555-0102', type: 'Seller', title: 'CFO', deals: 1 },
+            { id: 3, name: 'Mike Chen', company: 'PayFlow Systems', email: 'mike.chen@payflow.com', phone: '+1 555-0103', type: 'Advisor', title: 'Managing Partner', deals: 1 },
+        ];
+
+        const initialCompanies = [
+            { id: 1, name: 'TechCorp Inc.', industry: 'Technology', size: '51-200 employees', location: 'San Francisco, CA', website: 'https://techcorp.com', description: 'Leading technology company specializing in enterprise software solutions', revenueRange: '$10M - $50M', foundedYear: 2015 },
+            { id: 2, name: 'RetailChain LLC', industry: 'Retail', size: '201-500 employees', location: 'New York, NY', website: 'https://retailchain.com', description: 'Major retail chain with operations across North America', revenueRange: '$50M - $100M', foundedYear: 2008 },
+            { id: 3, name: 'PayFlow Systems', industry: 'Financial Services', size: '11-50 employees', location: 'Austin, TX', website: 'https://payflow.io', description: 'Innovative fintech company providing payment solutions', revenueRange: '$1M - $10M', foundedYear: 2019 },
+            { id: 4, name: 'HealthCare Corp', industry: 'Healthcare', size: '500+ employees', location: 'Boston, MA', website: 'https://healthcare-corp.com', description: 'Healthcare services and medical technology provider', revenueRange: '$100M+', foundedYear: 2005 },
+        ];
+
+        const initialTasks = [
+            { id: 1, title: 'Review financial statements', deal: 'TechCorp Acquisition', dealId: 1, contact: 'John Smith', contactId: 1, company: 'TechCorp Inc.', assignedTo: 'Jane Smith', priority: 'high', status: 'in_progress', dueDate: '2026-02-01', description: 'Review Q4 financials before due diligence' },
+            { id: 2, title: 'Schedule due diligence meeting', deal: 'RetailChain Merger', dealId: 2, contact: 'Sarah Johnson', contactId: 2, company: 'RetailChain LLC', assignedTo: 'John Doe', priority: 'urgent', status: 'todo', dueDate: '2026-01-29', description: 'Set up initial DD meeting' },
+            { id: 3, title: 'Finalize term sheet', deal: 'FinTech Investment', dealId: 3, contact: 'Mike Chen', contactId: 3, company: 'PayFlow Systems', assignedTo: 'Mike Johnson', priority: 'medium', status: 'todo', dueDate: '2026-02-05', description: 'Complete and review term sheet' },
+        ];
+
+        const initialDocuments = [
+            { id: 1, name: 'Financial_Statements_Q4_2025.pdf', folder: 'Financial', size: '2.4 MB', uploaded: '2026-01-20', permissions: ['view', 'download', 'print', 'secure'] },
+            { id: 2, name: 'NDA_Template.docx', folder: 'Legal', size: '145 KB', uploaded: '2026-01-22', permissions: ['view', 'download', 'print'] },
+            { id: 3, name: 'Valuation_Report.xlsx', folder: 'Financial', size: '892 KB', uploaded: '2026-01-24', permissions: ['view', 'no_copy', 'secure'] },
+            { id: 4, name: 'Due_Diligence_Checklist.pdf', folder: 'Official', size: '310 KB', uploaded: '2026-01-25', permissions: ['view', 'download'] },
+        ];
+
+        const initialTeamMembers = [
+            { id: 1, name: 'John Doe', email: 'john.doe@company.com', role: 'admin' },
+            { id: 2, name: 'Jane Smith', email: 'jane.smith@company.com', role: 'member' },
+            { id: 3, name: 'Mike Johnson', email: 'mike.j@company.com', role: 'viewer' },
+        ];
+
+        // Main App Component
+        const App = () => {
+            const [currentPage, setCurrentPage] = useState('dashboard');
+            const [pageHistory, setPageHistory] = useState(['dashboard']);
+            const [sidebarOpen, setSidebarOpen] = useState(false);
+            
+            const [deals, setDeals] = useState(initialDeals);
+            const [contacts, setContacts] = useState(initialContacts);
+            const [companies, setCompanies] = useState(initialCompanies);
+            const [tasks, setTasks] = useState(initialTasks);
+            const [documents, setDocuments] = useState(initialDocuments);
+            const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
+
+            // Deal Handlers
+            const handleSaveDeal = (dealData) => {
+                if (dealData.id) {
+                    setDeals(deals.map(d => d.id === dealData.id ? dealData : d));
+                } else {
+                    setDeals([...deals, { ...dealData, id: deals.length + 1 }]);
+                }
+            };
+
+            // Contact Handlers
+            const handleSaveContact = (contactData) => {
+                if (contactData.id) {
+                    setContacts(contacts.map(c => c.id === contactData.id ? contactData : c));
+                } else {
+                    setContacts([...contacts, { ...contactData, id: contacts.length + 1 }]);
+                }
+            };
+
+            // Task Handlers
+            const handleSaveTask = (taskData) => {
+                if (taskData.id) {
+                    setTasks(tasks.map(t => t.id === taskData.id ? taskData : t));
+                } else {
+                    setTasks([...tasks, { ...taskData, id: tasks.length + 1 }]);
+                }
+            };
+
+            // Team Member Handlers
+            const handleSaveTeamMember = (memberData) => {
+                if (memberData.id) {
+                    setTeamMembers(teamMembers.map(m => m.id === memberData.id ? memberData : m));
+                } else {
+                    setTeamMembers([...teamMembers, { ...memberData, id: teamMembers.length + 1 }]);
+                }
+            };
+
+            const handleDeleteDeal = (id) => setDeals(deals.filter(d => d.id !== id));
+            const handleDeleteContact = (id) => setContacts(contacts.filter(c => c.id !== id));
+            const handleDeleteTask = (id) => setTasks(tasks.filter(t => t.id !== id));
+            const handleDeleteDocument = (id) => setDocuments(documents.filter(d => d.id !== id));
+            const handleDeleteTeamMember = (id) => setTeamMembers(teamMembers.filter(m => m.id !== id));
+
+            const handleUploadDocument = (fileData) => {
+                const newDoc = {
+                    id: documents.length + 1,
+                    ...fileData
+                };
+                setDocuments([...documents, newDoc]);
+            };
+
+            
+            const handleBack = () => {
+                if (pageHistory.length > 1) {
+                    const newHistory = [...pageHistory];
+                    newHistory.pop(); // Remove current page
+                    const previousPage = newHistory[newHistory.length - 1];
+                    setPageHistory(newHistory);
+                    setCurrentPage(previousPage);
+                } else {
+                    setCurrentPage('dashboard');
+                }
+            };
+
+            const handleToggleTask = (id) => {
+                setTasks(tasks.map(task => 
+                    task.id === id ? {...task, status: task.status === 'done' ? 'todo' : 'done'} : task
+                ));
+            };
+
+            const handleSetPermissions = (docId, permissions) => {
+                setDocuments(documents.map(doc => 
+                    doc.id === docId ? { ...doc, userPermissions: permissions } : doc
+                ));
+                alert('✅ Permissions saved successfully!');
+            };
+
+            const navigation = [
+                { id: 'dashboard', name: 'Dashboard', icon: <Icons.Dashboard /> },
+                { id: 'pipeline', name: 'Pipeline', icon: <Icons.BarChart /> },
+                { id: 'deals', name: 'Deals', icon: <Icons.Briefcase /> },
+                { id: 'companies', name: 'Companies', icon: <Icons.Building /> },
+                { id: 'contacts', name: 'Contacts', icon: <Icons.Users /> },
+                { id: 'tasks', name: 'Tasks', icon: <Icons.CheckSquare /> },
+                { id: 'dataroom', name: 'Dataroom', icon: <Icons.Folder /> },
+                { id: 'team', name: 'Team', icon: <Icons.UserPlus /> },
+            ];
+
+            const navigateTo = (page) => {
+                if (page !== currentPage) {
+                    setPageHistory([...pageHistory, page]);
+                    setCurrentPage(page);
+                }
+            };
+
+            const renderPage = () => {
+                switch (currentPage) {
+                    case 'dashboard': return <Dashboard deals={deals} tasks={tasks} contacts={contacts} onEditDeal={(deal) => { setCurrentPage('deals'); }} onNavigate={(page) => setCurrentPage(page)} onEditTask={() => setCurrentPage('tasks')} />;
+                    case 'pipeline': return <Pipeline deals={deals} handleBack={handleBack} onEditDeal={(deal) => { setCurrentPage('deals'); }} />;
+                    case 'deals': return <DealsList deals={deals} contacts={contacts} companies={companies} onSaveDeal={handleSaveDeal} onDelete={handleDeleteDeal} onCreateTask={handleSaveTask} teamMembers={teamMembers} handleBack={handleBack} />;
+                    case 'companies': return <Companies companies={companies} onSaveCompany={handleSaveCompany} onDelete={handleDeleteCompany} handleBack={handleBack} />;
+                    case 'contacts': return <Contacts contacts={contacts} companies={companies} onSaveContact={handleSaveContact} onDelete={handleDeleteContact} onCreateTask={handleSaveTask} teamMembers={teamMembers} handleBack={handleBack} />;
+                    case 'tasks': return <Tasks tasks={tasks} deals={deals} contacts={contacts} onSaveTask={handleSaveTask} onDelete={handleDeleteTask} onToggle={handleToggleTask} teamMembers={teamMembers} handleBack={handleBack} />;
+                    case 'dataroom': return <Dataroom documents={documents} deals={deals} onDelete={handleDeleteDocument} onSetPermissions={handleSetPermissions} teamMembers={teamMembers} onUpload={handleUploadDocument} />;
+                    case 'team': return <TeamMembers members={teamMembers} onSaveMember={handleSaveTeamMember} onDelete={handleDeleteTeamMember} />;
+                    default: return <Dashboard deals={deals} tasks={tasks} contacts={contacts} onEditDeal={(deal) => { setCurrentPage('deals'); }} />;
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {sidebarOpen && (
+                        <div className="fixed inset-0 z-50 lg:hidden">
+                            <div className="fixed inset-0 bg-gray-900/50" onClick={() => setSidebarOpen(false)} />
+                            <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl">
+                                <div className="flex h-16 items-center justify-between px-6 border-b">
+                                    <h1 className="text-xl font-bold text-gray-900">M&A CRM</h1>
+                                    <button onClick={() => setSidebarOpen(false)} className="text-gray-500"><Icons.X /></button>
+                                </div>
+                                <nav className="mt-6 px-3">
+                                    {navigation.map(item => (
+                                        <button key={item.id} onClick={() => { setCurrentPage(item.id); setSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-colors ${currentPage === item.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                            {item.icon}<span className="font-medium">{item.name}</span>
+                                        </button>
+                                    ))}
+                                </nav>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+                        <div className="flex flex-col flex-1 min-h-0 bg-white border-r border-gray-200">
+                            <div className="flex items-center h-16 px-6 border-b">
+                                <h1 className="text-xl font-bold text-gray-900">M&A CRM</h1>
+                            </div>
+                            <nav className="flex-1 px-3 py-6">
+                                {navigation.map(item => (
+                                    <button key={item.id} onClick={() => navigateTo(item.id)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg mb-1 transition-colors ${currentPage === item.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                        {item.icon}<span className="font-medium">{item.name}</span>
+                                    </button>
+                                ))}
+                            </nav>
+                            <div className="p-4 border-t">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">JD</div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">John Doe</p>
+                                        <p className="text-xs text-gray-500">Admin</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:pl-64">
+                        <div className="sticky top-0 z-10 flex h-16 items-center gap-4 bg-white border-b px-4 lg:hidden">
+                            <button onClick={() => setSidebarOpen(true)} className="text-gray-500"><Icons.Menu /></button>
+                            <h1 className="text-lg font-semibold text-gray-900">M&A CRM</h1>
+                        </div>
+                        <main className="p-6 lg:p-8">{renderPage()}</main>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
